@@ -5,12 +5,21 @@ public class Thread3 extends Thread{
 
     private int start;
     private int end;
+    private Data data;
+    private Monitor monitor;
+
+    int aT3;
+    int dT3;
+    int pT3;
+    int[][] MDT3;
 
     public Thread3(String name, int N) {
         super(name);
 
-        Data.E = new int[N];
-
+        monitor = new Monitor();
+        data=new Data();
+        MDT3 = new int[N][N];
+        Data.MC=new int[N][N];
         start = Data.N / 2;
         end = (int) Math.floor(3 * (Data.N / (double) 4));
     }
@@ -18,36 +27,33 @@ public class Thread3 extends Thread{
     @Override
     public void run() {
         System.out.println(Thread.currentThread().getName() + " has started");
-        try {
-            Data.S0.acquire();
-            Data.fillVector(Data.E, "E");
-            Data.S0.release();
 
+        Data.fillMatrix(Data.MC, "MC");
+        data.set_p(Data.enterNumber("p"));
 
-            Data.S3.release(3); // Надсилання сигнала T1, T2, T4 про закінчення введення E
-            Data.S1.acquire(1); // Отримання сигнала від T1 про закінчення введення C, x
-            Data.S2.acquire(1); // Отримання сигнала від T2 про закінчення введення B, MA
-            Data.S4.acquire(1); // Отримання сигнала від T4 про закінчення введення D, MB
+        monitor.signal_1();
+        System.out.println("Signal T3 input ended");
+        monitor.wait_1();
 
-            int ai = Data.multiplyVectors(Data.getSubVector(Data.B, start, end), Data.getSubVector(Data.C, start, end));
-            System.out.println("ai T3: " + ai);
-            Data.a.addAndGet(ai);
+        aT3 = Data.getLowestValueFromVector(Data.getSubVector(Data.Z, start, end));
 
-            Data.S7.release(3); // Надсилання сигнала T1, T2, T4 про закінчення обрахунків ai
-            Data.S5.acquire(); // Отримання сигнала від T1 про закінчення обрахунків ai
-            Data.S6.acquire(); // Отримання сигнала від T2 про закінчення обрахунків ai
-            Data.S8.acquire(); // Отримання сигнала від T4 про закінчення обрахунків ai
+        monitor.signal_2();
+        System.out.println("T3 a calculations ended");
+        monitor.wait_2();
 
-            int[] Zh = Data.addVectors(Data.multiplyNumberByVector(Data.a.get(), Data.getSubVector(Data.D, start, end)),
-                    Data.multiplyNumberByVector(Data.x, Data.multiplyVectorByMatrix(Data.E, Data.multiplyMatrixByMatrix(Data.MA, Data.getSubMatrix(Data.MB, start, end)))));
+        data.set_a(data.max_a_Value(aT3));
+        pT3 =data.get_p();
+        dT3 =data.get_d();
+        MDT3 =data.get_MD();
 
-            Data.S10.acquire(); // Отримання сигнала від T2 про закінчення додавання Zh
-            Data.addZ(Zh);
-            System.out.println(Thread.currentThread().getName() + " has finished");
-            Data.S11.release(); // Надсилання сигнала T4 про закінчення додавання Zh
+        monitor.signal_3();
+        System.out.println("T3 a insertion ended");
+        monitor.wait_3();
 
-        } catch (InterruptedException e) {
-            System.out.println(e.getMessage());
-        }
+        Data.writeToMA(Data.addMatrixAndMatrix(Data.multiplyNumberByMatrix(Data.multiplyMatrixByMatrix(MDT3, Data.getSubMatrix(Data.MC,start,end)),dT3),
+                Data.multiplyNumberByMatrix(Data.getSubMatrix(Data.MX,start,end), Data.multiplyNumberByNumber(aT3,pT3))),start,end);
+
+        monitor.signal_4();
+        System.out.println("T3 ended");
     }
 }

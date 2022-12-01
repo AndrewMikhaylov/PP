@@ -4,46 +4,49 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Data {
     public static int N;
-    public static int[] B;
-    public static int[] C;
-    public static int[] D;
-    public static int[] E;
-    public static int[][] MA;
-    public static int[][] MB;
-    public static int x;
-    public static AtomicInteger a = new AtomicInteger();
+    public static int[][]MA;
+    public static int[][]MX;
+    public static int[][]MC;
+    public static int[] Z;
 
-    public static ArrayList<Integer> Z = new ArrayList<>();
-
-    public static Semaphore S0 = new Semaphore(1);
+    //Спільні ресурси
+    private static int[][] MD;
+    private static int a = 0;
+    private static int d;
+    private static int p;
 
 
+    public synchronized int get_a() {
+        return a;
+    }
 
+    public synchronized void set_a(int a) {
+        this.a = a;
+    }
 
-    public static Semaphore S1 = new Semaphore(0);
-    public static Semaphore S2 = new Semaphore(0);
-    public static Semaphore S3 = new Semaphore(0);
-    public static Semaphore S4 = new Semaphore(0);
+    public synchronized int get_d() {
+        return d;
+    }
+    public synchronized void set_d(int d){
+        this.d=d;
+    }
 
+    public synchronized int get_p() {
+        return p;
+    }
+    public synchronized void set_p(int p){
+        this.p = p;
+    }
 
-
-
-    public static Semaphore S5 = new Semaphore(0);
-    public static Semaphore S6 = new Semaphore(0);
-    public static Semaphore S7 = new Semaphore(0);
-    public static Semaphore S8 = new Semaphore(0);
-
-
-    public static Semaphore S9 = new Semaphore(0);
-    public static Semaphore S10 = new Semaphore(0);
-    public static Semaphore S11 = new Semaphore(0);
-    public static Semaphore S12 = new Semaphore(0);
-
+    public synchronized int[][] get_MD() {
+        return MD;
+    }
+    public synchronized void set_MD(int[][] MD){
+        this.MD=MD;
+    }
 
     public static void generateVector(int[] vector) {
         Random random = new Random();
@@ -51,6 +54,21 @@ public class Data {
             vector[i] = 1;
         }
     }
+
+    public int max_a_Value(int aTi){
+        return Math.max(this.get_a(), aTi);
+    }
+
+    public static int getLowestValueFromVector(int[] vector){
+        int value = Integer.MAX_VALUE;
+        for (int i = 0; i<vector.length; i++){
+            if (vector[i]<value){
+                value = vector[i];
+            }
+        }
+        return value;
+    }
+
     public static void fillVectorFromCommandLine(int[] vector) {
         Scanner scanner = new Scanner(System.in);
         String readVector = scanner.nextLine();
@@ -67,13 +85,12 @@ public class Data {
         } else if (vector.length > 3) {
             generateVector(vector);
         }
-        System.out.println("Vector '" + vectorName + "': " + Arrays.toString(vector));
+        System.out.println(vectorName + " generated");
     }
 
     public static int enterNumber(String numberName) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter number '" + numberName + "': ");
-        int number = scanner.nextInt();
+        System.out.println(numberName +" generated");
+        int number = 1;
         return number;
     }
 
@@ -107,8 +124,7 @@ public class Data {
         } else if (matrix.length > 3) {
             generateMatrix(matrix);
         }
-        System.out.println("<<<<<<<<<<<<Matrix '" + matrixName + "'>>>>>>>>>>>>");
-        printMatrix(matrix);
+        System.out.println(matrixName+" generated");
     }
 
     public static void printMatrix(int[][] matrix) {
@@ -119,23 +135,7 @@ public class Data {
             System.out.println();
         }
     }
-    public static void printVector(ArrayList<Integer> vector) {
-        System.out.print("[ ");
-        for (Integer vectorElement : vector) {
-            System.out.print(vectorElement + " ");
-        }
 
-        System.out.println("]");
-    }
-
-
-    public static int multiplyVectors(int[] v1, int[] v2) {
-        int result = 0;
-        for (int i = 0; i < v1.length; i++) {
-            result += v1[i] * v2[i];
-        }
-        return result;
-    }
     public static int[] getSubVector(int[] vector, int startIndex, int endIndex) {
         int[] subVector;
         if (endIndex < startIndex) {
@@ -148,14 +148,6 @@ public class Data {
             subVector[temp++] = vector[i];
         }
         return subVector;
-    }
-
-    public static int[] multiplyNumberByVector(int number, int[] vector) {
-        int[] newVector = new int[vector.length];
-        for (int i = 0; i < vector.length; i++) {
-            newVector[i] = vector[i] * number;
-        }
-        return newVector;
     }
 
     public static int[][] getSubMatrix(int[][] matrix, int startColumn, int endColumn) {
@@ -176,14 +168,29 @@ public class Data {
         return subMatrix;
     }
 
-    public static int[] multiplyVectorByMatrix(int[] vector, int[][] matrix) {
-        int[] resVector = new int[matrix[0].length];
-        for (int i = 0; i < matrix[0].length; i++) {
-            for (int j = 0; j < vector.length; j++) {
-                resVector[i] += vector[j] * matrix[j][i];
+    public static int[][] multiplyNumberByMatrix(int[][] matrix, int scalar){
+        int[][] newMatrix = matrix;
+        for (int i = 0; i<matrix.length; i++){
+            for (int j = 0; j<matrix[i].length; j++){
+                newMatrix[i][j]=newMatrix[i][j]*scalar;
             }
         }
-        return resVector;
+        return newMatrix;
+    }
+
+    public static int multiplyNumberByNumber(int a, int b){
+        int result = a*b;
+        return result;
+    }
+
+    public static int[][] addMatrixAndMatrix(int[][]matrix1, int[][]matrix2){
+        int[][] finalMatrix = new int[matrix1.length][matrix2[0].length];
+        for (int i = 0; i<finalMatrix.length; i++){
+            for (int j = 0; j<finalMatrix[i].length;j++){
+                finalMatrix[i][j] = matrix1[i][j]+matrix2[i][j];
+            }
+        }
+        return finalMatrix;
     }
 
     public static int[][] multiplyMatrixByMatrix(int[][] m1, int[][] m2) {
@@ -199,17 +206,13 @@ public class Data {
         return resMatrix;
     }
 
-    public static int[] addVectors(int[] v1, int[] v2) {
-        int[] resV = new int[v1.length];
-        for (int i = 0; i < v1.length; i++) {
-            resV[i] = v1[i] + v2[i];
-        }
-        return resV;
-    }
-
-    public static void addZ(int[] vector) {
-        for (int i = 0; i < vector.length; i++) {
-            Z.add(vector[i]);
+    public static void writeToMA(int[][] matrix, int start, int end) {
+        for (int i=0;i< matrix.length;i++)
+        {
+            int k = 0;
+            for (int j = start; j<end; j++){
+                MA[i][j] = matrix[i][k];
+            }
         }
     }
 }
